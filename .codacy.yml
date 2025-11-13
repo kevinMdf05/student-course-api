@@ -1,0 +1,22 @@
+# Configuration Codacy
+---
+# Fichiers/dossiers à exclure de l'analyse
+exclude_paths:
+  - 'node_modules/**'
+  - 'coverage/**'
+  - 'tests/**'
+  - '*.json'
+  - '*.md'
+  - 'JOURNAL.md'
+
+# Moteurs d'analyse à utiliser
+engines:
+  eslint:
+    enabled: true
+  duplication:
+    enabled: true
+    config:
+      languages:
+        - javascript
+  metrics:
+    enabled: true

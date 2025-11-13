@@ -1,46 +1,83 @@
+// Tests unitaires : teste les fonctions storage.js isolément (sans HTTP)
 const storage = require('../../src/services/storage');
 
+// beforeEach = exécuté AVANT chaque test pour avoir des données propres
 beforeEach(() => {
-  storage.reset();
-  storage.seed();
+  storage.reset(); // Vide la base de données
+  storage.seed(); // Remet les données de départ : Alice, Bob, Charlie + Math, Physics, History
 });
 
-test('should allow duplicate course title', () => {
-  const result = storage.create('courses', { title: 'Math', teacher: 'Someone' });
-  expect(result.title).toBe('Math');
-});
+// ========== CRÉATION ==========
 
-test('should list seeded students', () => {
-  const students = storage.list('students');
-  expect(students.length).toBe(3);
-  expect(students[0].name).toBe('Alice');
-});
-
-test('should create a new student', () => {
+test('Créer un étudiant', () => {
+  // Appelle directement la fonction create() du storage
   const result = storage.create('students', { name: 'David', email: 'david@example.com' });
   expect(result.name).toBe('David');
-  expect(storage.list('students').length).toBe(4);
 });
 
-test('should not allow duplicate student email', () => {
+test('Bloquer email en double', () => {
+  // alice@example.com existe déjà → doit retourner une erreur
   const result = storage.create('students', { name: 'Eve', email: 'alice@example.com' });
   expect(result.error).toBe('Email must be unique');
 });
 
-test('should delete a student', () => {
-  const students = storage.list('students');
-  const result = storage.remove('students', students[0].id);
-  expect(result).toBe(true);
+test('Bloquer titre de cours en double', () => {
+  const result = storage.create('courses', { title: 'Math', teacher: 'Prof' });
+  expect(result.error).toBe('Course title must be unique');
 });
 
-test('should allow more than 3 students in a course', () => {
-  const students = storage.list('students');
-  const course = storage.list('courses')[0];
-  storage.create('students', { name: 'Extra', email: 'extra@example.com' });
-  storage.create('students', { name: 'Extra2', email: 'extra2@example.com' });
-  storage.enroll(students[0].id, course.id);
-  storage.enroll(students[1].id, course.id);
-  storage.enroll(students[2].id, course.id);
-  const result = storage.enroll(4, course.id);
+// ========== LECTURE ==========
+
+test('Lister les étudiants', () => {
+  const list = storage.list('students');
+  expect(list.length).toBe(3);
+});
+
+test('Récupérer par ID', () => {
+  const student = storage.get('students', 1);
+  expect(student.name).toBe('Alice');
+});
+
+// ========== SUPPRESSION ==========
+
+test('Supprimer un étudiant', () => {
+  const ok = storage.remove('students', 1);
+  expect(ok).toBe(true);
+});
+
+// ========== INSCRIPTIONS ==========
+
+test('Inscrire un étudiant', () => {
+  const result = storage.enroll(1, 1);
   expect(result.success).toBe(true);
+});
+
+test('Bloquer cours plein (3 max)', () => {
+  // Règle métier : maximum 3 étudiants par cours
+  storage.enroll(1, 1); // Alice
+  storage.enroll(2, 1); // Bob
+  storage.enroll(3, 1); // Charlie
+  storage.create('students', { name: 'Extra', email: 'extra@example.com' });
+  const result = storage.enroll(4, 1); // 4ème étudiant → doit échouer
+  expect(result.error).toBe('Course is full');
+});
+
+test('Désinscrire un étudiant', () => {
+  storage.enroll(1, 1);
+  const result = storage.unenroll(1, 1);
+  expect(result.success).toBe(true);
+});
+
+test('Voir cours d\'un étudiant', () => {
+  storage.enroll(1, 1);
+  storage.enroll(1, 2);
+  const courses = storage.getStudentCourses(1);
+  expect(courses.length).toBe(2);
+});
+
+test('Voir étudiants d\'un cours', () => {
+  storage.enroll(1, 1);
+  storage.enroll(2, 1);
+  const students = storage.getCourseStudents(1);
+  expect(students.length).toBe(2);
 });

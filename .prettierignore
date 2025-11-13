@@ -1,0 +1,17 @@
+# Dépendances
+node_modules/
+
+# Coverage
+coverage/
+
+# Build
+dist/
+build/
+
+# Fichiers à ne pas formater
+package-lock.json
+*.md
+
+# Fichiers système
+.DS_Store
+*.log

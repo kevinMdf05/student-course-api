@@ -1,0 +1,18 @@
+# Dépendances
+node_modules/
+
+# Coverage et tests
+coverage/
+
+# Build
+dist/
+build/
+
+# Fichiers système
+.DS_Store
+*.log
+.env
+
+# Fichiers temporaires
+*.tmp
+*.cache
